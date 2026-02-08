@@ -12,6 +12,8 @@ interface UserRepositoryInterface
 
     public function findByExternalId(UserExternalId $userId): ?User;
 
-    public function flush(): void;
+    public function findByUserIdentifier(string $userIdentifier): ?User;
 
+    public function flush(): void;
+    
 }

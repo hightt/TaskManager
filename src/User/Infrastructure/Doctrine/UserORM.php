@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\User\Infrastructure\Doctrine;
 
+use App\Entity\Task;
+use App\Task\Infrastructure\Doctrine\TaskORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -64,6 +68,20 @@ class UserORM implements PasswordAuthenticatedUserInterface, UserInterface
 
     #[ORM\Column(length: 255)]
     private ?string $companyBs = null;
+
+    #[ORM\Column(type: 'json')]
+    private array $roles = [];
+
+    /**
+     * @var Collection<int, Task>
+     */
+    #[ORM\OneToMany(targetEntity: TaskORM::class, mappedBy: 'user')]
+    private Collection $tasks;
+
+    public function __construct()
+    {
+        $this->tasks = new ArrayCollection();
+    }
 
     public function getId(): ?string
     {
@@ -233,31 +251,31 @@ class UserORM implements PasswordAuthenticatedUserInterface, UserInterface
         return $this;
     }
 
-    public function getCompanyName()
+    public function getCompanyName(): string
     {
         return $this->companyName;
     }
 
-    public function setCompanyName($companyName)
+    public function setCompanyName($companyName): static
     {
         $this->companyName = $companyName;
 
         return $this;
     }
 
-    public function getCompanyCatchPhrase()
+    public function getCompanyCatchPhrase(): string
     {
         return $this->companyCatchPhrase;
     }
 
-    public function setCompanyCatchPhrase($companyCatchPhrase)
+    public function setCompanyCatchPhrase($companyCatchPhrase): static
     {
         $this->companyCatchPhrase = $companyCatchPhrase;
 
         return $this;
     }
 
-    public function getCompanyBs()
+    public function getCompanyBs(): string
     {
         return $this->companyBs;
     }
@@ -271,7 +289,17 @@ class UserORM implements PasswordAuthenticatedUserInterface, UserInterface
 
     public function getRoles(): array
     {
-        return ['ROLE_USER'];
+        $roles = $this->roles;
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+
+        return $this;
     }
 
     public function eraseCredentials(): void
@@ -281,5 +309,35 @@ class UserORM implements PasswordAuthenticatedUserInterface, UserInterface
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
+    }
+
+    /**
+     * @return Collection<int, Task>
+     */
+    public function getTasks(): Collection
+    {
+        return $this->tasks;
+    }
+
+    public function addTask(TaskORM $task): static
+    {
+        if (!$this->tasks->contains($task)) {
+            $this->tasks->add($task);
+            $task->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTask(TaskORM $task): static
+    {
+        if ($this->tasks->removeElement($task)) {
+            // set the owning side to null (unless already changed)
+            if ($task->getUser() === $this) {
+                $task->setUser(null);
+            }
+        }
+
+        return $this;
     }
 }
