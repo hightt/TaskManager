@@ -6,10 +6,11 @@ namespace App\User\Infrastructure\Doctrine;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
-class UserORM implements PasswordAuthenticatedUserInterface
+class UserORM implements PasswordAuthenticatedUserInterface, UserInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: 'string', length: 255)]
@@ -266,5 +267,19 @@ class UserORM implements PasswordAuthenticatedUserInterface
         $this->companyBs = $companyBs;
 
         return $this;
+    }
+
+    public function getRoles(): array
+    {
+        return ['ROLE_USER'];
+    }
+
+    public function eraseCredentials(): void
+    {
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
     }
 }
