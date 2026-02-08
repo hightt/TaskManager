@@ -16,6 +16,7 @@ class User
         private string $phone,
         private string $website,
         private UserCompany $userCompany,
+        private array $roles = [],
     ){
     }
 
@@ -29,13 +30,14 @@ class User
         string $phone,
         string $website,
         UserCompany $userCompany,
+        array $roles,
     )
     {
         if (strlen($username) < 3) {
             throw new \DomainException(sprintf("Username %s is too short.", $username));
         }
 
-        return new self($userId, $userExternalId, $name, $username, $userEmail, $userAddress, $phone, $website, $userCompany);
+        return new self($userId, $userExternalId, $name, $username, $userEmail, $userAddress, $phone, $website, $userCompany, $roles);
     }
 
     public function userId(): UserId
@@ -81,5 +83,15 @@ class User
     public function userCompany(): UserCompany
     {
         return $this->userCompany;
+    }
+
+    public function roles(): array
+    {
+        return $this->roles;
+    }
+
+    public function isAdmin(): bool
+    {
+        return in_array('ROLE_ADMIN', $this->roles, true);
     }
 }

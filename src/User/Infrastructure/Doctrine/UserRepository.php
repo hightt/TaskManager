@@ -50,6 +50,20 @@ class UserRepository implements UserRepositoryInterface
         return $this->fromOrm($userOrm);
     }
 
+    public function findByUserIdentifier(string $userIdentifier): ?User
+    {
+        $userOrm = $this->entityManager
+            ->getRepository(UserORM::class)
+            ->findOneBy(['email' => $userIdentifier])
+        ;
+
+        if (is_null($userOrm)) {
+            return null;
+        }
+
+        return $this->fromOrm($userOrm);
+    }
+
 
     public function save(User $user): void
     {
@@ -58,7 +72,7 @@ class UserRepository implements UserRepositoryInterface
         $this->entityManager->persist($userOrm);
     }
 
-    private function toOrm(User $user)
+    public function toOrm(User $user)
     {
         $userOrm = new UserORM();
         $randomPlainPassword = bin2hex(random_bytes(8)); 
@@ -85,10 +99,11 @@ class UserRepository implements UserRepositoryInterface
             ->setCompanyName($user->userCompany()->name())
             ->setCompanyCatchPhrase($user->userCompany()->catchPhrase())
             ->setCompanyBs($user->userCompany()->bs())
+            ->setRoles($user->roles())
         ;
     }
 
-    private function fromOrm(UserORM $userOrm): User
+    public function fromOrm(UserORM $userOrm): User
     {
         return User::create(
             new UserId($userOrm->getId()),
@@ -112,7 +127,8 @@ class UserRepository implements UserRepositoryInterface
                 $userOrm->getCompanyName(),
                 $userOrm->getCompanyCatchPhrase(),
                 $userOrm->getCompanyBs()
-            )
+            ),
+            $userOrm->getRoles(),
         );
     }
 

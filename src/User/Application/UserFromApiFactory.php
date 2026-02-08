@@ -39,7 +39,8 @@ class UserFromApiFactory
             $data['company']['name'],
             $data['company']['catchPhrase'],
             $data['company']['bs']
-        )
+        ),
+        ['USER_ROLE']
     );
 }
 }
