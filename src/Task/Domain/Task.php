@@ -54,6 +54,8 @@ class Task
     
     public function name(): string
     {
+        /* TODO: VALIDATION */
+        
         return $this->name;
     }
 
