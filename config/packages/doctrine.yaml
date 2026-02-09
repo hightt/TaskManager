@@ -32,6 +32,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Task/Infrastructure/Doctrine'
                 prefix: 'App\Task\Infrastructure\Doctrine'
                 alias: Task
+            Shared:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/src/Shared'
+                prefix: 'App\Shared'
+                alias: Shared
         controller_resolver:
             auto_mapping: false
 

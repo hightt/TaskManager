@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Task\Infrastructure\Doctrine;
 
+use ReflectionClass;
+use DateTimeImmutable;
 use App\Task\Domain\Task;
 use App\Task\Domain\TaskId;
+use App\User\Domain\UserId;
+use App\Shared\EventStoreORM;
 use App\Task\Domain\TaskStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Task\Domain\TaskRepositoryInterface;
 use App\Task\Infrastructure\Doctrine\TaskORM;
-use App\User\Domain\UserId;
 use App\User\Infrastructure\Doctrine\UserORM;
 use App\User\Infrastructure\Doctrine\UserRepository;
 
@@ -37,20 +40,32 @@ class TaskRepository implements TaskRepositoryInterface
     {
         $taskOrm = $this->entityManager->find(TaskORM::class, $task->id()->id());
 
-        if (null === $taskOrm) {
+        if (is_null($taskOrm)) {
             $taskOrm = new TaskORM();
             $taskOrm->setId($task->id()->id());
             $this->entityManager->persist($taskOrm);
         }
 
+        $userReference = $this->entityManager->getReference(UserORM::class, $task->user()->userId()->id());
         $taskOrm
             ->setName($task->name())
             ->setDescription($task->description())
             ->setStatus($task->status()->value)
+            ->setUser($userReference)
         ;
 
-        $userReference = $this->entityManager->getReference(UserORM::class, $task->user()->userId()->id());
-        $taskOrm->setUser($userReference);
+        foreach($task->pullEvents() as $event) {
+            $className = (new ReflectionClass($event))->getShortName();
+            $eventStoreOrm = new EventStoreORM();
+            $eventStoreOrm
+                ->setAggregateId($task->id()->id())
+                ->setEventName($className)
+                ->setPayLoad((array)$event)
+                ->setCreatedAt(new DateTimeImmutable())
+            ;
+
+            $this->entityManager->persist($eventStoreOrm);
+        }
     }
 
     public function toOrm(Task $task)
